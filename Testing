@@ -1,0 +1,447 @@
+<?php
+/**
+ * OrangeHRM is a comprehensive Human Resource Management (HRM) System that captures
+ * all the essential functionalities required for any enterprise.
+ * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
+ *
+ * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA  02110-1301, USA
+ */
+require_once ROOT_PATH . '/lib/confs/sysConf.php';
+
+
+if (isset($_GET['message']) && !empty($_GET['message'])) {
+
+	$expString  = $_GET['message'];
+	$expString = explode ("_",$expString);
+	$length = count($expString);
+
+	$col_def=strtolower($expString[$length-1]);
+	$expString='lang_Library_'.$_GET['message'];
+
+	$message = isset($$expString) ? $$expString : CommonFunctions::escapeHtml($_GET['message']);
+	?>
+	<font class="<?php echo $col_def?>" size="-1" face="Verdana, Arial, Helvetica, sans-serif">
+<?php echo $message; ?>
+	</font>
+<?php }			
+
+
+	$sortBy =  isset($_REQUEST['sortField'])?$_REQUEST['sortField']:null;
+	$sortOrder = null;
+	$rec_limit = 20;
+	
+	
+	
+	$recCount= isset($_REQUEST['recordCount'])?$_REQUEST['recordCount']:0;
+	$page =  isset($_REQUEST['page'])?$_REQUEST['page']:0;
+	if ($sortBy != null) {
+
+			 $sortParam = "sortOrder" . $sortBy;
+			 if (isset($_REQUEST[$sortParam])) {
+					 $sortOrder =  $_REQUEST[$sortParam];
+			 }
+	 }
+	 
+	 function getCurSortOrder($colNum) {
+
+                $curSortOrder = null;
+
+                $varName = "sortOrder${colNum}";
+                if (isset($_REQUEST[$varName])) {
+                        $curSortOrder = $_REQUEST[$varName];
+                }
+                return $curSortOrder;
+        }
+
+        function getNextSortOrder($colNum) {
+
+                $curSortOrder = getCurSortOrder($colNum);
+
+                if ($curSortOrder == 'ASC') {
+                        $nextSortOrder = "DESC";
+                } else {
+                        $nextSortOrder = "ASC";
+                }
+                return $nextSortOrder;
+        }
+
+
+        function getNextSortOrderInWords($colNum) {
+
+                $curSortOrder = getCurSortOrder($colNum);
+
+                if ($curSortOrder == 'ASC') {
+                        return "lang_Common_Sort_DESC";
+                } else {
+                        return "lang_Common_Sort_ASC";
+                }
+        }
+
+        function getSortURL($colNum) {
+
+                $sortOrder = getNextSortOrder($colNum);
+                $url = "./CentralController.php?libcode=lib&action=edit&sortField=${colNum}&sortOrder${colNum}=${sortOrder}";
+                return $url;
+        }
+
+        function getSortIcon($colNum) {
+
+                $imgName = getCurSortOrder($colNum);
+                if ($imgName == null) {
+                        $imgName = 'null';
+                }
+                return "../../themes/beyondT/icons/" . $imgName . ".png";
+        }
+		
+	
+		
+?>
+<script>
+	<!--button on click action functionality -->
+
+	function actionEdit() {
+
+		$check = 0;
+		with (document.DefineLeaveType) {
+			for (var i=0; i < elements.length; i++) {
+				if ((elements[i].type == 'checkbox') && (elements[i].checked == true)){
+					$check = 1;
+				}
+			}
+		}
+
+		if ( $check == 1 ){
+
+			var res = confirm("<?php echo $lang_Error_DoYouWantToEdit; ?>");
+
+			if(!res) return;
+
+			document.DefineLeaveType.action = '?libcode=lib&action=Library_Type_Edit';
+ 			document.DefineLeaveType.submit();
+		}else{
+			alert("<?php echo $lang_Error_SelectAtLeastOneRecordToEdit; ?>");
+		}
+		
+	}
+	function actionDelete() {
+		$check = 0;
+		with (document.DefineLeaveType) {
+		
+			for (var i=0; i < elements.length; i++) {
+				if ((elements[i].type == 'checkbox') && (elements[i].checked == true)){
+					$check = 1;
+				}
+			}
+		}
+
+		if ( $check == 1 ){
+
+			var res = confirm("<?php echo $lang_Error_DoYouWantToDelete; ?>");
+
+			if(!res) return;
+
+			document.DefineLeaveType.action = '?libcode=lib&action=Delete_Library_Records';
+ 			document.DefineLeaveType.submit();
+		}else{
+			alert("<?php echo $lang_Error_SelectAtLeastOneRecordToDelete; ?>");
+		}
+	}
+	
+<!--button on click sorting action functionality -->
+
+	function sort(sortUrl) {
+	    document.DefineLeaveType.action = sortUrl;
+        document.DefineLeaveType.submit();
+     }
+	function doHandleAll() {
+		with (document.DefineLeaveType) {
+			if(elements['allCheck'].checked == false){
+				doUnCheckAll();
+			}
+			else if(elements['allCheck'].checked == true){
+				doCheckAll();
+			}
+		}
+	}
+	
+<!--checkbox functionality -->
+
+function doHandleAll() {
+		with (document.DefineLeaveType) {
+			if(elements['allCheck'].checked == false){
+				doUnCheckAll();
+			}
+			else if(elements['allCheck'].checked == true){
+				doCheckAll();
+			}
+		}
+	}
+
+
+	function doCheckAll() {
+		with (document.DefineLeaveType) {
+			for (var i=0; i < elements.length; i++) {
+				if (elements[i].type == 'checkbox') {
+					elements[i].checked = true;
+				}
+			}
+		}
+	}
+
+
+	function doUnCheckAll() {
+		with (document.DefineLeaveType) {
+			for (var i=0; i < elements.length; i++) {
+				if (elements[i].type == 'checkbox') {
+					elements[i].checked = false;
+				}
+			}
+		}
+	}
+
+	function removeMarkFromCell(cell, mark) {
+
+		// See if cell already contains mark
+		children = cell.getElementsByTagName('span');
+		for (var i=0; i < children.length; i++) {
+
+			spanElement = children[i];
+			txtNode = spanElement.firstChild;
+			if (txtNode.data == mark) {
+				cell.removeChild(spanElement);
+				return;
+			}
+		}
+	}
+	
+	 function updateEditEntry(test){      // function get called when the onclick event occur
+		 	with (document.DefineLeaveType) {
+				for (var i=0; i < elements.length; i++) {
+					if (elements[i].type == 'checkbox') {
+							if(elements[i].value == test){
+								elements[i].checked = true;
+								break;
+							}
+					}
+				}
+			}
+		 }
+</script>
+<h2><?php echo "Library"; ?><hr/></h2>
+
+<form method="post" name="DefineLeaveType" id="DefineLeaveType" onsubmit="return false;">
+<?php 
+	if($_SESSION['isAdmin']=='Yes') { ?>
+	<p class="navigation">
+	<!-- <input disabled type="image" onmouseout="this.src='../../themes/beyondT/pictures/btn_add.gif';" onmouseover="this.src='../../themes/beyondT/pictures/btn_add_02.gif';" src="../../themes/beyondT/pictures/btn_add.gif" name="btnAdd" id="btnAdd" onclick="actionAdd(); return false;"/> -->
+	<input type="image" src="../../themes/beyondT/pictures/btn_save.gif" width="65" height="20" onclick="actionEdit();" onmouseover="this.src='../../themes/beyondT/pictures/btn_save.gif';" onmouseout="this.src='../../themes/beyondT/pictures/btn_save.gif';" name="btnEdit" id="btnEdit" />
+	<input type="image" onclick="actionDelete();" onmouseout="this.src='../../themes/beyondT/pictures/btn_delete.gif';" onmouseover="this.src='../../themes/beyondT/pictures/btn_delete_02.gif';" src="../../themes/beyondT/pictures/btn_delete.gif" name="btnDel" id="btnDel"/>
+	<?php 
+	}
+?>
+  <table width="1500" border="0" cellpadding="0" cellspacing="0" id="results"">
+  <thead>
+    <tr>
+      <th width="1" class="tableTopLeft"></th>
+      <th   class="tableTopMiddle"></th>
+	  <th   class="tableTopMiddle"></th>
+	  <th   class="tableTopMiddle"></th>
+	  <th   class="tableTopMiddle"></th>
+	  <th   class="tableTopMiddle"></th>
+	  <th   class="tableTopMiddle"></th>
+	  <th   class="tableTopMiddle"></th>
+	  
+	  <th   class="tableTopMiddle"></th>
+	  <th   class="tableTopMiddle"></th>
+	  <th  width="1" class="tableTopRight"></th>
+    </tr>
+    <tr>
+      <th class="tableMiddleLeft"></th>
+	  <th width="77" align="center" class="tableMiddleMiddle">
+		  <div align="center">
+			<input type='checkbox' class='checkbox' name='allCheck' value='' onclick="doHandleAll();" />
+		  </div>
+	  </th>
+	  <?php $col = 0; ?>
+        <th width="100"  align="centre" class="tableMiddleMiddle">
+			<a href="#" onclick="sort('<?php echo getSortURL($col); ?>')" title="<?php $word = getNextSortOrderInWords($col); echo $$word; ?>" class="sortBy">
+				<?php echo $lang_Library_RCID?>
+			</a>
+			<img src="<?php echo getSortIcon($col); ?>" width="8" height="10" border="0" alt="" style="vertical-align: bottom"/>
+		</th>
+		<?php $col = 1; ?>
+		<th width="200" align="centre" class="tableMiddleMiddle">
+			<a href="#" onclick="sort('<?php echo getSortURL($col); ?>')" title="<?php $word = getNextSortOrderInWords($col); echo $$word; ?>" class="sortBy">
+				<?php echo $lang_Library_Title?>
+			</a>
+			<img src="<?php echo getSortIcon($col); ?>" width="8" height="10" border="0" alt="" style="vertical-align: bottom"/>
+		</th>
+		<?php $col = 2; ?>
+		<th width="100" align="centre" class="tableMiddleMiddle">
+			<a href="#" onclick="sort('<?php echo getSortURL($col); ?>')" title="<?php $word = getNextSortOrderInWords($col); echo $$word; ?>" class="sortBy">
+				<?php echo $lang_Library_Isbnnum;?>
+			</a>
+			<img src="<?php echo getSortIcon($col); ?>" width="8" height="10" border="0" alt="" style="vertical-align: bottom">
+		</th>
+		<?php $col = 3; ?>
+		<th width="20" align="centre" class="tableMiddleMiddle">
+			<a href="#" onclick="sort('<?php echo getSortURL($col); ?>')" title="<?php $word = getNextSortOrderInWords($col); echo $$word; ?>" class="sortBy">
+				<?php echo $lang_Library_Status;?>
+				</a>
+		    <img src="<?php echo getSortIcon($col); ?>" width="8" height="10" border="0" alt="" style="vertical-align: bottom">		
+		</th>
+        <?php $col = 4; ?>
+		<th width="150" align="centre" class="tableMiddleMiddle">
+	  		<a href="#" onclick="sort('<?php echo getSortURL($col); ?>')" title="<?php $word = getNextSortOrderInWords($col); echo $$word; ?>" class="sortBy">
+				<?php echo $lang_Library_Publisher;?>
+			</a>
+			<img src="<?php echo getSortIcon($col); ?>" width="8" height="10" border="0" alt="" style="vertical-align: bottom">
+		</th>
+	    <?php $col = 5; ?>
+		<th width="100" align="centre" class="tableMiddleMiddle">
+	  		<a href="#" onclick="sort('<?php echo getSortURL($col); ?>')" title="<?php $word = getNextSortOrderInWords($col); echo $$word; ?>" class="sortBy">
+				<?php echo $lang_Library_Author;?>
+			</a>
+			<img src="<?php echo getSortIcon($col); ?>" width="8" height="10" border="0" alt="" style="vertical-align: bottom">
+		</th>
+		<?php $col = 6; ?>
+		<th width="100" align="centre" class="tableMiddleMiddle">
+			<a href="#" onclick="sort('<?php echo getSortURL($col); ?>')" title="<?php $word = getNextSortOrderInWords($col); echo $$word; ?>" class="sortBy">
+				<?php echo $lang_Library_Type;?>
+			</a>
+				<img src="<?php echo getSortIcon($col); ?>" width="8" height="10" border="0" alt="" style="vertical-align: bottom">		
+		</th>
+		<?php $col = 7; ?>
+		<th width="200" align="centre" class="tableMiddleMiddle">
+			<a href="#" onclick="sort('<?php echo getSortURL($col); ?>')" title="<?php $word = getNextSortOrderInWords($col); echo $$word; ?>" class="sortBy">
+				<?php echo $lang_Library_Summary;?>
+			</a>
+			<img src="<?php echo getSortIcon($col); ?>" width="8" height="10" border="0" alt="" style="vertical-align: bottom">		
+		</th>
+	    
+	  
+      <th class="tableMiddleRight"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <?php
+	$rec_count = $recCount[0];
+	
+	$j = 0;
+	if (is_array($records))
+		foreach ($records as $record) {
+			if(!($j%2)) {
+				$cssClass = 'odd';
+			 } else {
+			 	$cssClass = 'even';
+			 }
+				$j++;
+?>
+    <tr>
+      <td class="tableMiddleLeft"></td>
+	  <td align="center" class="<?php echo $cssClass; ?>">
+		<input type='checkbox' class='checkbox' id='chkLeaveTypeID[]' name='chkLeaveTypeID[]' value='<?php echo $record->getlibraryTypeId();?>' />
+	  </td>
+	  <td class="<?php echo $cssClass; ?>">
+	  	
+	  	<?php if($record->getlibraryrc_Id() != null && $record->getlibraryrc_Id() !="") {?>
+	  		<input readonly name="txtLibraryTypeRCID[<?php echo $record->getlibraryTypeId();?>]" type="text" id="txtLibraryTypeRCID[<?php echo $record->getlibraryTypeId();?>]" value="<?php echo $record->getlibraryrc_Id();?>"   onfocus="updateEditEntry('<?php echo $record->getlibraryTypeId()?>');"/></td>
+	  	<?php }else{?>
+	  		<input name="txtLibraryTypeRCID[<?php echo $record->getlibraryTypeId();?>]" type="text" id="txtLibraryTypeRCID[<?php echo $record->getlibraryTypeId();?>]" value="<?php echo $record->getlibraryrc_Id();?>"   onfocus="updateEditEntry('<?php echo $record->getlibraryTypeId()?>');"/></td>
+	  	<?php }?>
+	  </td>
+	  <td class="<?php echo $cssClass; ?>"><input name="txtLibraryTypetitle[<?php echo $record->getlibraryTypeId();?>]" type="text" id="txtLibraryTypetitle[<?php echo $record->getlibraryTypeId();?>]" value="<?php echo $record->getlibraryTitle();?>"   onfocus="updateEditEntry('<?php echo $record->getlibraryTypeId()?>');"/></td>
+	  <td class="<?php echo $cssClass; ?>"><input name="txtLibraryTypeISBN[<?php echo $record->getlibraryTypeId();?>]" type="text" id="txtLibraryTypeISBN[<?php echo $record->getlibraryTypeId();?>]" value="<?php echo $record->getlibraryIsbnnum();?>"  onfocus="updateEditEntry('<?php echo $record->getlibraryTypeId()?>');"/></td>
+	  <td class="<?php echo $cssClass; ?>">
+			<select name="txtLibraryTypeStatus[<?php echo $record->getlibraryTypeId();?>]" id="txtLibraryTypeStatus[<?php echo $record->getlibraryTypeId();?>]"  onfocus="updateEditEntry('<?php echo $record->getlibraryTypeId()?>');">
+				<?php if($record->getlibraryStatus() == "Available"){ ?>
+					<option Selected value="Available">Available</option>
+					<option value="Issued">Issued</option>
+				<?php 
+				}else{ 
+				?>
+					<option  value="Available">Available</option>
+					<option Selected value="Issued">Issued</option>
+				<?php 
+				}
+				?>
+			</select>	
+	 </td>
+	  <td class="<?php echo $cssClass; ?>"><input name="txtLibraryTypePublisher[<?php echo $record->getlibraryTypeId();?>]" type="text" id="txtLibraryTypePublisher[<?php echo $record->getlibraryTypeId();?>]" value="<?php echo $record->getlibraryPublisher();?>"  onfocus="updateEditEntry('<?php echo $record->getlibraryTypeId()?>');"/></td>
+	  <td class="<?php echo $cssClass; ?>"><input name="txtLibraryTypeAuthor[<?php echo $record->getlibraryTypeId();?>]" type="text" id="txtLibraryTypeAuthor[<?php echo $record->getlibraryTypeId();?>]" value="<?php echo $record->getlibraryAuthor();?>"  onfocus="updateEditEntry('<?php echo $record->getlibraryTypeId()?>');"/></td>
+	  <td class="<?php echo $cssClass; ?>">
+	  		<select name="txtLibraryTypeType[<?php echo $record->getlibraryTypeId();?>]"  id="txtLibraryTypeType[<?php echo $record->getlibraryTypeId();?>]"  onfocus="updateEditEntry('<?php echo $record->getlibraryTypeId()?>');">
+	  			<?php if($record->getlibraryType() == "Book"){ ?>
+					<option Selected value="Book">Book</option>
+					<option value="CD/DVD">CD/DVD</option>
+				<?php 
+				}else{ 
+				?>
+					<option  value="Book">Book</option>
+					<option Selected value="CD/DVD">CD/DVD</option>
+				<?php 
+				}
+				?>
+			</select>	
+    </td>
+	  		
+	  		
+	  		
+	  <td class="<?php echo $cssClass; ?>"><input name="txtLibraryTypeSummary[<?php echo $record->getlibraryTypeId();?>]" type="text" id="txtLibraryTypeSummary[<?php echo $record->getlibraryTypeId();?>]" value="<?php echo $record->getlibrarySummary();?>"  onfocus="updateEditEntry('<?php echo $record->getlibraryTypeId()?>');"/></td>
+	  <td class="tableMiddleRight"></td>
+	</tr>
+    <?php
+
+		}
+?>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td width="1" class="tableBottomLeft"></td>
+		<td  class="tableBottomMiddle"></td>
+	    <td class="tableBottomMiddle"></td>
+		<td  class="tableBottomMiddle"></td>
+		<td class="tableBottomMiddle"></td>
+		<td class="tableBottomMiddle"></td>
+		<td class="tableBottomMiddle"></td>
+		<td class="tableBottomMiddle"></td>
+		<td class="tableBottomMiddle"></td>
+		
+		<td class="tableBottomMiddle"></td>
+      <td class="tableBottomRight"></td>
+    </tr>
+  </tfoot>
+  </table>
+ <?php
+ 
+    $left_rec = $rec_count - ($page * $rec_limit);
+	if( $page > 0 && !($left_rec <= $rec_limit))
+	{
+	   $last = $page - 2;
+	   echo "<a href='./CentralController.php?libcode=lib&action=edit&page=$last'>Last Records</a> |";
+	   echo "<a href='./CentralController.php?libcode=lib&action=edit&page=$page'>Next Records</a>";
+	}
+	else if($page == 0 && !($left_rec <= $rec_limit))
+	{
+	  echo "<a href='./CentralController.php?libcode=lib&action=edit&page=$page'>Next Records</a>";
+	}
+	else if(($left_rec <= $rec_limit)) 
+	{
+	   $last = $page - 2;
+	   echo "<a href='./CentralController.php?libcode=lib&action=edit&page=$last'>Last Records</a>";
+	}
+?>
+</div>
+</form>
+ 
